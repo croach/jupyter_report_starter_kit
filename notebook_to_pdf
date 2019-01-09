@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+
+"""
+Script to convert a Jupyter notebook to a PDF.
+
+This script will convert a Jupyter notebook to a PDF and offers the option of
+moving inline cell contents out of the body of the report and into a separate
+appendix section. The inspiration for this functionality comes from the R
+community's knitr and R Markdown projects. An example of which can be seen in
+the blog post from the creator of knitr listed below.
+
+https://yihui.name/en/2018/09/code-appendix/
+
+To use the appendix feature, just add a label to any cell's metadata, and then
+reference that label in the "ref_labels" list of the metadata of the cell where
+you want to display the contents later in the notebook. To also hide the
+contents of the cell inline, add a "hide_all" tag to its metadata. An example of
+the metadata for a cell that both adds a label and hides the contents can be
+seen below.
+
+  {
+    "tags": [
+      "hide_all"
+    ],
+    "label": "appendix"
+  }
+
+To display the cell contents in an appendix, simply add a cell later in the
+notebook and add the labels of the cells that you want to display in the
+"ref_labels" list. An example of the metadata of a cell that displays the
+labeled cell contents is given below.
+
+  {
+    "ref_labels": [
+      "appendix"
+    ]
+  }
+
+The labeled cell contents will be stitched together in order of their appearance
+in the document.
+
+Note that, unlike the R Markdown and knitr versions of this feature, this script
+allows users to reuse labels throughout the notebook. In that sense, they act a
+bit more like tags than they do labels; however, you can only have a single
+label, whereas a cell can have several tags.
+
+"""
+
+import argparse
+import os
+from collections import namedtuple
+
+import nbconvert
+import nbformat
+
+try:
+    from nbconvert.nbconvertapp import NbConvertApp
+except ImportError:
+    from IPython.nbconvert.nbconvertapp import NbConvertApp
+
+
+# The nbformat version to write. Use this to downgrade notebooks. The choices
+# are 1,2,3,4 and the default is 4.
+NBFORMAT_VERSION = 4
+
+def get_output_filename(input_filename, output_filename=None):
+  if output_filename is not None:
+    return output_filename
+  else:
+    return os.path.splitext(input_filename)[0] + '.pdf'
+
+
+def get_config():
+    """Load and return the user's nbconvert configuration
+    """
+    app = NbConvertApp()
+    app.load_config_file()
+    return app.config
+
+
+def append_cell_contents(notebook):
+  """Appends prior cell contents to a later cell dependent on labels
+
+  This function will iterate through a notebook and grab all cells that have a
+  label and add them to any cell that references that label (i.e., has the label
+  in its ref_labels list). Each cell's content will be displayed according to
+  the order of its appearance in the notebook.
+
+  """
+  Cell = namedtuple('Cell', ['label', 'contents'])
+  cells = []
+  for cell in notebook.cells:
+    label = cell.get('metadata', {}).get('label', None)
+    ref_labels = cell.get('metadata', {}).get('ref_labels', [])
+    if label is not None:
+      cells.append(Cell(label, cell['source']))
+    elif ref_labels:
+      cell['source'] = '\n\n'.join(cell.contents for cell in cells if cell.label in ref_labels).strip()
+
+  return notebook
+
+
+def convert_notebook_to_pdf(input_file, output_file=None, template_file=None):
+  config = get_config()
+  exporter = nbconvert.PDFExporter(config)
+  exporter.template_file = template_file
+
+  # Pull the code from the notebook, add it to the appendix, and convert the
+  # notebook to a PDF file
+  notebook = nbformat.read(input_file, as_version=NBFORMAT_VERSION)
+  notebook = append_cell_contents(notebook)
+  title = os.path.splitext(input_file)[0]
+  resources = nbconvert.exporters.exporter.ResourcesDict()
+  resources['metadata'] = {'name': title}
+  (body, resources) = exporter.from_notebook_node(notebook, resources)
+
+  output_file = get_output_filename(input_file, output_file)
+  with open(output_file, 'w') as fout:
+    fout.write(body)
+
+
+def main():
+  parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=__doc__)
+  parser.add_argument('notebook', type=str,
+                      help='Notebook file to be converted')
+  parser.add_argument('--template', type=str,
+                      help='Optional template file')
+  parser.add_argument('--output', type=str,
+                      help='Name of the output file')
+  args = parser.parse_args()
+
+  convert_notebook_to_pdf(args.notebook, args.output, args.template)
+
+
+if __name__ == "__main__":
+  main()

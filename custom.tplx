@@ -1,0 +1,19 @@
+((*- extends 'article.tplx' -*))
+
+((* block docclass *))
+\documentclass[9pt]{article}
+
+% Let all figures float 'H'ere
+\usepackage{float}
+\floatplacement{figure}{H}
+
+% Nice tables
+\usepackage{array}
+((* endblock docclass *))
+
+% Add syntax highlighting
+((* block input scoped *))
+    \begin{Verbatim}[commandchars=\\\{\}]
+((( cell.source | highlight_code(strip_verbatim=True, metadata=cell.metadata) )))
+    \end{Verbatim}
+((* endblock input *))
