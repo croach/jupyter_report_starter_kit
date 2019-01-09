@@ -1,0 +1,6 @@
+# Ignore jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore python byte code files
+*.pyc
+notebook_to_pdfc
