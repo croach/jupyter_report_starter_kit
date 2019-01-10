@@ -63,23 +63,27 @@ contents of the cell inline, add a "hide_all" tag to its metadata. An example of
 the metadata for a cell that both adds a label (for later reference) and hides
 the contents of the cell inline can be seen below.
 
-  {
-    "tags": [
-      "hide_all"
-    ],
-    "label": "appendix"
-  }
+```json
+{
+  "tags": [
+    "hide_all"
+  ],
+  "label": "appendix"
+}
+```
 
 To display the cell's contents in an appendix, simply add a cell later in the
 notebook where you want the code to be displayed and add the labels of the cells
 that you want to display in the "ref_labels" list. An example of the metadata of
 a cell that displays the labeled cell's contents is given below.
 
-  {
-    "ref_labels": [
-      "appendix"
-    ]
-  }
+```json
+{
+  "ref_labels": [
+    "appendix"
+  ]
+}
+```
 
 The labeled cell's contents will be stitched together in order of their
 appearance in the document.
