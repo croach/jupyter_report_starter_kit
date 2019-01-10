@@ -87,3 +87,21 @@ a cell that displays the labeled cell's contents is given below.
 
 The labeled cell's contents will be stitched together in order of their
 appearance in the document.
+
+## Auto-Generating Reports
+
+As described above, you can generate a PDF report by running the
+`notebook_to_pdf` script at the command line. However, this may seem a tad
+cumbersome and clumsy and you may find yourself wanting a more elegant and easy
+way to generate your reports. The answer is to take advantage of a post save
+script that will generate the report every time the notebook is saved. This
+feature is turned off by default, so to take advantage of it you must first turn
+it on by opening up the `jupyter_notebook_config.py` file and uncommenting the
+last line in the file, which I've listed below to make it easier to find. Once
+you've uncommented that line, just kill and restart your notebook and the next
+time you save the notebook file, you should see a new file generated for you
+with the notebook file's name and the .pdf extension.
+
+```python
+#c.FileContentsManager.post_save_hook = script_post_save
+```
