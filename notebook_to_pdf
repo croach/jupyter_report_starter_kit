@@ -115,7 +115,7 @@ def convert_notebook_to_pdf(input_file, output_file=None, template_file=None):
   (body, resources) = exporter.from_notebook_node(notebook, resources)
 
   output_file = get_output_filename(input_file, output_file)
-  with open(output_file, 'w') as fout:
+  with open(output_file, 'wb') as fout:
     fout.write(body)
 
 
