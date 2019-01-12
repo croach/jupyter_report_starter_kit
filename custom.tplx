@@ -3,6 +3,17 @@
 ((* block docclass *))
 \documentclass[9pt]{article}
 
+% TODO: Where should this type of config actually go?
+% Remove paragraph indentation
+\setlength\parindent{0pt}
+
+% Remove all section numbers
+\setcounter{secnumdepth}{0}
+((* endblock docclass *))
+
+((* block packages *))
+((( super() )))
+
 % Let all figures float 'H'ere
 \usepackage{float}
 \floatplacement{figure}{H}
