@@ -110,8 +110,13 @@ def convert_notebook_to_pdf(input_file, output_file=None, template_file=None):
   notebook = nbformat.read(input_file, as_version=NBFORMAT_VERSION)
   notebook = append_cell_contents(notebook)
   title = os.path.splitext(input_file)[0]
+  # Not sure why, but for some reason, from_notebook_node doesn't extract the
+  # metadata from the notebook note, so we have to do it. Otherwise, the
+  # conversion will just ignore important notebook metadata such as the title
+  # and the list of authors.
   resources = nbconvert.exporters.exporter.ResourcesDict()
   resources['metadata'] = {'name': title}
+  resources['metadata'].update(notebook['metadata'])
   (body, resources) = exporter.from_notebook_node(notebook, resources)
 
   output_file = get_output_filename(input_file, output_file)
