@@ -20,7 +20,16 @@
 
 % Nice tables
 \usepackage{array}
-((* endblock docclass *))
+((* endblock packages *))
+
+% The following is taken from the latest version of base.tplx. I've added it
+% here because this is not in the version nbconvert that is currently available
+% via conda install.
+((* block author *))
+  ((* if 'authors' in nb.metadata *))
+  \author{((( nb.metadata.authors | join(', ', attribute='name') )))}
+  ((* endif *))
+((* endblock author *))
 
 % Add syntax highlighting
 ((* block input scoped *))
