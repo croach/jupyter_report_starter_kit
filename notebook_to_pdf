@@ -63,12 +63,6 @@ except ImportError:
 # are 1,2,3,4 and the default is 4.
 NBFORMAT_VERSION = 4
 
-def get_output_filename(input_filename, output_filename=None):
-  if output_filename is not None:
-    return output_filename
-  else:
-    return os.path.splitext(input_filename)[0] + '.pdf'
-
 
 def get_config():
     """Load and return the user's nbconvert configuration
@@ -89,7 +83,7 @@ def append_cell_contents(notebook):
   """
   Cell = namedtuple('Cell', ['label', 'contents'])
   cells = []
-  for cell in notebook.cells:
+  for cell in notebook['cells']:
     label = cell.get('metadata', {}).get('label', None)
     ref_labels = cell.get('metadata', {}).get('ref_labels', [])
     if label is not None:
@@ -100,26 +94,19 @@ def append_cell_contents(notebook):
   return notebook
 
 
-def convert_notebook_to_pdf(input_file, output_file=None, template_file=None):
+def convert_notebook_to_pdf(notebook, output_file=None, template_file=None):
   config = get_config()
   exporter = nbconvert.PDFExporter(config)
-  exporter.template_file = template_file
+  if template_file is not None:
+    exporter.template_file = template_file
 
-  # Pull the code from the notebook, add it to the appendix, and convert the
-  # notebook to a PDF file
-  notebook = nbformat.read(input_file, as_version=NBFORMAT_VERSION)
+  notebook = nbformat.notebooknode.from_dict(notebook)
   notebook = append_cell_contents(notebook)
-  title = os.path.splitext(input_file)[0]
-  # Not sure why, but for some reason, from_notebook_node doesn't extract the
-  # metadata from the notebook note, so we have to do it. Otherwise, the
-  # conversion will just ignore important notebook metadata such as the title
-  # and the list of authors.
+  title = os.path.splitext(output_file)[0]
   resources = nbconvert.exporters.exporter.ResourcesDict()
   resources['metadata'] = {'name': title}
-  resources['metadata'].update(notebook['metadata'])
   (body, resources) = exporter.from_notebook_node(notebook, resources)
 
-  output_file = get_output_filename(input_file, output_file)
   with open(output_file, 'wb') as fout:
     fout.write(body)
 
@@ -136,7 +123,11 @@ def main():
                       help='Name of the output file')
   args = parser.parse_args()
 
-  convert_notebook_to_pdf(args.notebook, args.output, args.template)
+  # Pull the code from the notebook, add it to the appendix, and convert the
+  # notebook to a PDF file
+  notebook = nbformat.read(args.notebook, as_version=NBFORMAT_VERSION)
+  output_file = os.path.splitext(args.notebook)[0] + '.pdf'
+  convert_notebook_to_pdf(notebook, output_file, args.template)
 
 
 if __name__ == "__main__":

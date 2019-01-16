@@ -2,6 +2,10 @@ import os
 import sys
 
 
+import os
+import sys
+
+
 def load_module(module_name, root_dir):
   """Load the notebook_to_pdf module
 
@@ -32,28 +36,25 @@ def load_module(module_name, root_dir):
   return module
 
 
-def script_post_save(model, os_path, contents_manager, **kwargs):
-    """convert notebooks to Python script after save with nbconvert
-
-    replaces `jupyter notebook --script`
+def generate_report_pre_save(model, path, contents_manager, **kwargs):
+    """Convert notebook to human readable PDF report before save with nbconvert
     """
     if model['type'] != 'notebook':
         return
 
-    # TODO: Find a better way to import the notebook_to_pdf file. Ultimately, I
-    # want to be able to do so without an __init__.py file in the root directory
-    # and without a .py file extension on the notebook_to_pdf file.
-    sys.path.append(contents_manager.root_dir)
-    import notebook_to_pdf
-
-    log = contents_manager.log
-
-    base, ext = os.path.splitext(os.path.basename(os_path))
-    input_filename = "{}{}".format(base, ext)
+    notebook = model['content']
+    base, ext = os.path.splitext(path)
     output_filename = "{}.pdf".format(base)
     template_filename = 'custom.tplx'
     notebook_to_pdf = load_module('notebook_to_pdf', contents_manager.root_dir)
-    notebook_to_pdf.convert_notebook_to_pdf(input_filename, output_filename, template_filename)
+    # Make sure that we continue working even if the conversion fails
+    try:
+      notebook_to_pdf.convert_notebook_to_pdf(notebook, output_filename, template_filename)
+    except Exception as e:
+      contents_manager.log.error(e, exc_info=True)
 
 # Uncomment the following line to turn on PDF generation upon save.
-#c.FileContentsManager.post_save_hook = script_post_save
+c.FileContentsManager.pre_save_hook = generate_report_pre_save
+
+
+#c.ContentsManager.pre_save_hook = None
